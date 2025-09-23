@@ -1,0 +1,24 @@
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    # (Optional) To make sure the api container doesn't try to connect to redis container until it is running
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s       # run the test every 5 seconds
+      timeout: 3s        # fail if no response in 3s
+      retries: 5         # mark as unhealthy after 5 failures
+      start_period: 10s  # give Redis a few seconds to warm up
+
+  weather-api:
+    build: .
+    ports:
+      - "8080:8080"
+    env_file: .env
+    depends_on:
+      redis:
+        condition: service_healthy
+
+
+# Use 'docker-compose up --build' to build and start the services.
