@@ -28,7 +28,7 @@ A lightweight **Weather API wrapper** built in Go, using:
 
 ### Prerequisites
 - [Go](https://go.dev/) 1.25+
-- [Docker](https://www.docker.com/) & [Colima](https://github.com/abiosoft/colima) (if on macOS)
+- [Docker](https://www.docker.com/), Docker Compose & [Colima](https://github.com/abiosoft/colima) (if on macOS)
 - Redis (if want to run locally, pulled automatically via Docker Compose)
 
 ### Clone & Run
