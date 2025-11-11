@@ -12,3 +12,7 @@ jobs:
         run: echo "Hello, World!"
       - name: Echo Repository Name
         run: echo "Repository ${{ github.repository }}"
+      - name: Create Greeting File
+        run: echo "Hello, World!" > greeting.txt
+      - name: Display Greeting File Content
+        run: cat greeting.txt
