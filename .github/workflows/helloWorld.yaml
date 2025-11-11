@@ -1,0 +1,14 @@
+name: Echo Hello World
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  echo-hello-world:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Echo Hello World
+        run: echo "Hello, World!"
+      - name: Echo Repository Name
+        run: echo "Repository ${{ github.repository }}"
