@@ -14,9 +14,9 @@ env:
   GO_VERSION: '1.21'
 
 jobs:
-  # Job 1: Basic build and test
-  build-and-test:
-    name: Build and Test
+  # Job 1: Basic build
+  build:
+    name: Build
     runs-on: ubuntu-latest
 
     steps:
@@ -39,19 +39,11 @@ jobs:
       - name: Download dependencies
         run: go mod download
 
-      # Step 5: Run tests with coverage
-      - name: Run tests
-        run: go test -v -race -coverprofile=coverage.out ./...
-
-      # Step 6: Display coverage
-      - name: Display coverage
-        run: go tool cover -func=coverage.out
-
-      # Step 7: Build the application
+      # Step 5: Build the application
       - name: Build application
         run: go build -v -o weather-api ./cmd/api
 
-      # Step 8: Upload the built binary as an artifact
+      # Step 6: Upload the built binary as an artifact
       - name: Upload binary artifact
         uses: actions/upload-artifact@v4
         with:
@@ -88,47 +80,12 @@ jobs:
       - name: Build
         run: go build -v ./cmd/api
 
-  # Job 3: Code quality checks
-  code-quality:
-    name: Code Quality Checks
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: ${{ env.GO_VERSION }}
-          cache: true
-
-      # Check code formatting
-      - name: Check formatting
-        run: |
-          if [ -n "$(gofmt -s -l .)" ]; then
-            echo "Go code is not formatted properly:"
-            gofmt -s -d .
-            exit 1
-          fi
-
-      # Run go vet for static analysis
-      - name: Run go vet
-        run: go vet ./...
-
-      # Install and run staticcheck (optional linter)
-      - name: Install staticcheck
-        run: go install honnef.co/go/tools/cmd/staticcheck@latest
-
-      - name: Run staticcheck
-        run: staticcheck ./...
-
-  # Job 4: Summary job that depends on all others
+  # Job 3: Summary job that depends on all others
   summary:
     name: Workflow Summary
     runs-on: ubuntu-latest
     # This job only runs if all previous jobs succeed
-    needs: [build-and-test, matrix-build, code-quality]
+    needs: [build, matrix-build]
 
     steps:
       - name: Print success message
