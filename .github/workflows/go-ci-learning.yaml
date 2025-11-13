@@ -41,7 +41,7 @@ jobs:
 
       # Step 5: Build the application
       - name: Build application
-        run: go build -v -o weather-api ./cmd/api
+        run: go build -v -o weather-api ./cmd/server
 
       # Step 6: Upload the built binary as an artifact
       - name: Upload binary artifact
@@ -78,7 +78,7 @@ jobs:
         run: go test -v ./...
 
       - name: Build
-        run: go build -v ./cmd/api
+        run: go build -v ./cmd/server
 
   # Job 3: Summary job that depends on all others
   summary:
