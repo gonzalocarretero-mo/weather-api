@@ -1,0 +1,149 @@
+name: Go CI/CD Learning Workflow
+
+# This workflow demonstrates various GitHub Actions concepts
+# Trigger this workflow on push to main, pull requests, or manually
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:  # Allows manual triggering from GitHub UI
+
+# Environment variables available to all jobs
+env:
+  GO_VERSION: '1.21'
+
+jobs:
+  # Job 1: Basic build and test
+  build-and-test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout the repository code
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Step 2: Set up Go environment
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true  # Automatically cache Go modules
+
+      # Step 3: Display Go version
+      - name: Display Go version
+        run: go version
+
+      # Step 4: Download dependencies
+      - name: Download dependencies
+        run: go mod download
+
+      # Step 5: Run tests with coverage
+      - name: Run tests
+        run: go test -v -race -coverprofile=coverage.out ./...
+
+      # Step 6: Display coverage
+      - name: Display coverage
+        run: go tool cover -func=coverage.out
+
+      # Step 7: Build the application
+      - name: Build application
+        run: go build -v -o weather-api ./cmd/api
+
+      # Step 8: Upload the built binary as an artifact
+      - name: Upload binary artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: weather-api-binary
+          path: weather-api
+          retention-days: 5
+
+  # Job 2: Matrix build - test across multiple Go versions
+  matrix-build:
+    name: Matrix Build (Go ${{ matrix.go-version }} on ${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      # Don't cancel other matrix jobs if one fails
+      fail-fast: false
+      matrix:
+        # Test on multiple Go versions and operating systems
+        go-version: ['1.20', '1.21', '1.22']
+        os: [ubuntu-latest, macos-latest]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go ${{ matrix.go-version }}
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go-version }}
+          cache: true
+
+      - name: Run tests
+        run: go test -v ./...
+
+      - name: Build
+        run: go build -v ./cmd/api
+
+  # Job 3: Code quality checks
+  code-quality:
+    name: Code Quality Checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+
+      # Check code formatting
+      - name: Check formatting
+        run: |
+          if [ -n "$(gofmt -s -l .)" ]; then
+            echo "Go code is not formatted properly:"
+            gofmt -s -d .
+            exit 1
+          fi
+
+      # Run go vet for static analysis
+      - name: Run go vet
+        run: go vet ./...
+
+      # Install and run staticcheck (optional linter)
+      - name: Install staticcheck
+        run: go install honnef.co/go/tools/cmd/staticcheck@latest
+
+      - name: Run staticcheck
+        run: staticcheck ./...
+
+  # Job 4: Summary job that depends on all others
+  summary:
+    name: Workflow Summary
+    runs-on: ubuntu-latest
+    # This job only runs if all previous jobs succeed
+    needs: [build-and-test, matrix-build, code-quality]
+
+    steps:
+      - name: Print success message
+        run: |
+          echo "✅ All checks passed!"
+          echo "Workflow triggered by: ${{ github.event_name }}"
+          echo "Branch: ${{ github.ref_name }}"
+          echo "Commit: ${{ github.sha }}"
+          echo "Actor: ${{ github.actor }}"
+
+      # Download the artifact from the build-and-test job
+      - name: Download binary artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: weather-api-binary
+
+      - name: List downloaded artifacts
+        run: ls -lh
